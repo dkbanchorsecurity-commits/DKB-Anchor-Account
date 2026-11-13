@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DKB Anchor Security - Accounts Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- html2pdf for Invoice Downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Custom Configuration for Tailwind Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Custom color palette based on Deep Blue and Light Blue
+                        brand: {
+                            900: '#0A192F', // Very Deep Blue (Sidebar bg)
+                            800: '#112240', // Deep Blue (Sidebar hover)
+                            700: '#233554', // Medium Deep Blue
+                            600: '#0056b3', // Primary Blue Button
+                            500: '#3B82F6', // Standard Blue
+                            100: '#E6F0FF', // Very Light Blue (Backgrounds)
+                            50: '#F5F8FC',  // Off-white Blueish background
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth transitions */
+        .transition-all-ease {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Hide scrollbar for sidebar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* Print Styles for Invoice */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableInvoiceArea, #printableInvoiceArea * {
+                visibility: visible;
+            }
+            #printableInvoiceArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans antialiased overflow-hidden flex h-screen">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-brand-900/50 z-20 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="bg-brand-900 text-white w-64 flex-shrink-0 fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 z-30 transition-transform duration-300 ease-in-out flex flex-col h-full shadow-2xl">
+        <!-- Logo Area -->
+        <div class="p-6 flex items-center justify-between border-b border-brand-700">
+            <div>
+                <h1 class="text-xl font-bold text-white leading-tight tracking-wide uppercase">DKB Anchor</h1>
+                <p class="text-xs text-brand-500 font-medium tracking-widest mt-1">Security Services</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">ACCOUNTING DEPT.</p>
+            </div>
+            <!-- Mobile Close Button -->
+            <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1">
+            
+            <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg bg-brand-800 text-brand-500 border-l-4 border-brand-500 font-medium transition-all-ease">
+                <i class="fas fa-chart-pie w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <a href="#" onclick="switchTab('clients')" id="nav-clients" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-users w-5 text-center"></i>
+                <span>Total Clients</span>
+            </a>
+            
+            <a href="#" onclick="switchTab('payroll')" id="nav-payroll" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-money-check-alt w-5 text-center"></i>
+                <span>Payroll</span>
+            </a>
+            
+            <a href="#" onclick="switchTab('expenditure')" id="nav-expenditure" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-chart-line w-5 text-center"></i>
+                <span>Expenditure</span>
+            </a>
+            
+            <a href="#" onclick="switchTab('invoices')" id="nav-invoices" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-file-invoice-dollar w-5 text-center"></i>
+                <span>Invoices</span>
+            </a>
+            
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statutory</p>
+            </div>
+
+            <a href="#" onclick="switchTab('gra')" id="nav-gra" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-landmark w-5 text-center"></i>
+                <span>GRA</span>
+            </a>
+            
+            <a href="#" onclick="switchTab('ssnit')" id="nav-ssnit" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease">
+                <i class="fas fa-shield-alt w-5 text-center"></i>
+                <span>SSNIT</span>
+            </a>
+        </nav>
+
+        <!-- User Profile Area (Sidebar Bottom) -->
+        <div class="p-4 border-t border-brand-700">
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-brand-800 p-2 rounded-lg transition-all-ease">
+                <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold border-2 border-brand-500">
+                    AD
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">Accounts Dept</p>
+                    <p class="text-xs text-gray-400 truncate">admin@dkbanchor.com</p>
+                </div>
+                <i class="fas fa-sign-out-alt text-gray-400 hover:text-red-400"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- Top Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center gap-4">
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleSidebar()" class="lg:hidden text-gray-500 hover:text-brand-600 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="page-title" class="text-xl font-semibold text-brand-900 capitalize">Dashboard Overview</h2>
+                </div>
+                
+                <!-- Right Header Actions -->
+                <div class="flex items-center gap-5">
+                    <!-- Live Clock -->
+                    <div class="hidden md:flex items-center text-sm font-medium text-brand-700 bg-brand-50 px-4 py-2 rounded-lg border border-brand-100 shadow-sm">
+                        <i class="far fa-clock mr-2 text-brand-500"></i>
+                        <span id="live-clock">Loading time...</span>
+                    </div>
+
+                    <!-- Notifications -->
+                    <button class="relative text-gray-500 hover:text-brand-600 transition-colors">
+                        <i class="far fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[9px] text-white items-center justify-center border-2 border-white">3</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-white">
+            
+            <!-- Dashboard View (Default Active) -->
+            <div id="view-dashboard" class="view-section block space-y-6">
+                
+                <!-- Welcome Section -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <h3 class="text-lg font-semibold text-brand-900">Financial Summary</h3>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200 uppercase tracking-wider">
+                                <span class="relative flex h-2 w-2">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                Live DB
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500">Overview of DKB Anchor's financial status for the current month.</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Stat Card 1: Total Revenue (Blue) -->
+                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-blue-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 mb-1">Total Revenue (MTD)</p>
+                                <h4 id="val-revenue" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">Fetching...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center text-blue-700 relative z-10">
+                                <i class="fas fa-wallet text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-blue-600 font-medium flex items-center"><i class="fas fa-arrow-up mr-1"></i> 12.5%</span>
+                            <span class="text-blue-700 ml-2 opacity-75">vs last month</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2: Total Clients (Soft Green) -->
+                    <div class="bg-green-50 p-6 rounded-xl border border-green-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-green-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-green-800 mb-1">Total Clients</p>
+                                <h4 id="val-clients" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center text-green-700 relative z-10">
+                                <i class="fas fa-building text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-green-600 font-medium flex items-center"><i class="fas fa-plus mr-1"></i> 3 New</span>
+                            <span class="text-green-700 ml-2 opacity-75">this month</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 3: Pending Invoices -->
+                    <div class="bg-amber-50 p-6 rounded-xl border border-amber-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-amber-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-amber-800 mb-1">Pending Invoices</p>
+                                <h4 id="val-invoices" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">Fetching...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-200 rounded-lg flex items-center justify-center text-amber-700 relative z-10">
+                                <i class="fas fa-file-invoice-dollar text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-amber-700 opacity-75">14 Active Client Invoices</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 4: Total Expenditure -->
+                    <div class="bg-rose-50 p-6 rounded-xl border border-rose-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-rose-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-rose-800 mb-1">Total Expenditure</p>
+                                <h4 id="val-expenditure" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">Fetching...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-rose-200 rounded-lg flex items-center justify-center text-rose-700 relative z-10">
+                                <i class="fas fa-chart-line text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-rose-600 font-medium flex items-center"><i class="fas fa-arrow-down mr-1"></i> 2.1%</span>
+                            <span class="text-rose-700 ml-2 opacity-75">vs last month</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 5: Salaries -->
+                    <div class="bg-purple-50 p-6 rounded-xl border border-purple-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-purple-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-purple-800 mb-1">Total Salaries</p>
+                                <h4 id="val-salaries" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">Fetching...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-200 rounded-lg flex items-center justify-center text-purple-700 relative z-10">
+                                <i class="fas fa-users-cog text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-purple-600 font-medium flex items-center"><i class="fas fa-check-circle mr-1"></i> Processed</span>
+                            <span class="text-purple-700 ml-2 opacity-75">for 145 staff</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 6: Profit -->
+                    <div class="bg-teal-50 p-6 rounded-xl border border-teal-200 shadow-sm relative overflow-hidden group">
+                        <div class="absolute right-0 top-0 w-24 h-24 bg-teal-100 rounded-bl-full -mr-4 -mt-4 opacity-70 transition-transform group-hover:scale-110"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-teal-800 mb-1">Net Profit</p>
+                                <h4 id="val-profit" class="text-2xl font-bold text-gray-900"><span class="animate-pulse text-gray-400 text-lg">Fetching...</span></h4>
+                            </div>
+                            <div class="w-12 h-12 bg-teal-200 rounded-lg flex items-center justify-center text-teal-700 relative z-10">
+                                <i class="fas fa-hand-holding-usd text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-teal-600 font-medium flex items-center"><i class="fas fa-arrow-up mr-1"></i> 18.2%</span>
+                            <span class="text-teal-700 ml-2 opacity-75">vs last month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Revenue Trends Chart -->
+                <div class="mt-8 bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-brand-900">Monthly Revenue Trends</h3>
+                            <p class="text-sm text-gray-500">Gross revenue performance over the current year (GHS)</p>
+                        </div>
+                        <div class="text-sm font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-100">
+                            2026 YTD
+                        </div>
+                    </div>
+                    <div class="relative w-full h-80">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Clients View -->
+            <div id="view-clients" class="view-section hidden">
+                <!-- Header & Action -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                    <div>
+                        <h3 class="text-lg font-semibold text-brand-900">Client Portfolio Management</h3>
+                        <p class="text-sm text-gray-500">Manage security contracts, contact details, and account status.</p>
+                    </div>
+                    <button onclick="openAddClientModal()" class="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow-md whitespace-nowrap flex items-center">
+                        <i class="fas fa-user-plus mr-2"></i> Add Client
+                    </button>
+                </div>
+
+                <!-- Clients Table -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+                    <div class="p-4 border-b border-brand-800 bg-brand-900 flex justify-between items-center">
+                        <div class="relative">
+                            <input type="text" placeholder="Search clients..." class="pl-9 pr-4 py-2 border border-transparent rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 w-full sm:w-64 bg-white text-gray-900 placeholder-gray-500">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                        </div>
+                        <div id="total-clients-counter" class="text-sm text-brand-100 font-medium">Total: 0 Active</div>
+                    </div>
+                    <div class="overflow-x-auto bg-white">
+                        <table class="w-full text-left border-collapse bg-white">
+                            <thead class="bg-brand-900 text-white">
+                                <tr class="text-xs uppercase tracking-wider border-t border-brand-800">
+                                    <th class="p-4 font-semibold">Client Name</th>
+                                    <th class="p-4 font-semibold">Contact Person</th>
+                                    <th class="p-4 font-semibold">Phone</th>
+                                    <th class="p-4 font-semibold">Address</th>
+                                    <th class="p-4 font-semibold">Email</th>
+                                    <th class="p-4 font-semibold">Start Date</th>
+                                    <th class="p-4 font-semibold">Guards</th>
+                                    <th class="p-4 font-semibold">Monthly Rate</th>
+                                    <th class="p-4 font-semibold">Total Revenue</th>
+                                    <th class="p-4 font-semibold">Status</th>
+                                    <th class="p-4 font-semibold text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body" class="text-sm divide-y divide-gray-200 bg-white">
+                                <tr><td colspan="11" class="p-8 text-center text-gray-500 animate-pulse bg-white"><i class="fas fa-spinner fa-spin mr-2 text-brand-500"></i> Fetching clients...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices View -->
+            <div id="view-invoices" class="view-section hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                    <div>
+                        <h3 class="text-lg font-semibold text-brand-900">Invoices Management</h3>
+                        <p class="text-sm text-gray-500">Create and track client invoices and pending payments.</p>
+                    </div>
+                    <button onclick="openAddInvoiceModal()" class="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition shadow-md whitespace-nowrap flex items-center">
+                        <i class="fas fa-file-invoice mr-2"></i> Generate Invoice
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+                    <div class="overflow-x-auto bg-white">
+                        <table class="w-full text-left border-collapse bg-white">
+                            <thead class="bg-brand-900 text-white">
+                                <tr class="text-xs uppercase tracking-wider border-t border-brand-800">
+                                    <th class="p-4 font-semibold">Invoice No.</th>
+                                    <th class="p-4 font-semibold">Client Name</th>
+                                    <th class="p-4 font-semibold">Billing Month</th>
+                                    <th class="p-4 font-semibold">Invoice Date</th>
+                                    <th class="p-4 font-semibold">Total Amount</th>
+                                    <th class="p-4 font-semibold">Status</th>
+                                    <th class="p-4 font-semibold text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoices-table-body" class="text-sm divide-y divide-gray-200 bg-white">
+                                <tr><td colspan="7" class="p-8 text-center text-gray-500 animate-pulse bg-white"><i class="fas fa-spinner fa-spin mr-2 text-brand-500"></i> Fetching invoices...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder for other views -->
+            <div id="view-placeholder" class="view-section hidden h-full flex items-center justify-center">
+                <div class="text-center p-8 bg-white rounded-xl shadow-sm border border-blue-100 max-w-md w-full">
+                    <div class="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i id="placeholder-icon" class="fas fa-tools text-3xl text-brand-600"></i>
+                    </div>
+                    <h3 id="placeholder-title" class="text-xl font-bold text-brand-900 mb-2 capitalize">Section Title</h3>
+                    <p class="text-gray-500 text-sm">The Accounts module for this section is currently being updated. Financial data and reports will be populated here shortly.</p>
+                    <button onclick="switchTab('dashboard')" class="mt-6 px-6 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition">
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- View Client Modal Overlay -->
+    <div id="viewClientModal" class="fixed inset-0 bg-brand-900/70 z-[60] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="viewClientModalInner">
+            <div class="bg-brand-900 px-6 py-4 flex items-center justify-between border-b border-brand-700">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-id-card mr-2 text-brand-500"></i> Client Details
+                </h3>
+                <button type="button" onclick="closeViewClientModal()" class="text-gray-400 hover:text-white transition-colors focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+                    <div class="w-16 h-16 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center text-2xl font-bold border border-brand-200 uppercase" id="viewClientInitials">
+                        NA
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold text-gray-900" id="viewClientName">Client Name</h4>
+                        <p class="text-brand-600 font-medium" id="viewClientStatus">Active</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Contact Person</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-user text-gray-400 mr-2 w-4"></i> <span id="viewClientContact">---</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Phone Number</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-phone text-gray-400 mr-2 w-4"></i> <span id="viewClientPhone">---</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Email Address</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-envelope text-gray-400 mr-2 w-4"></i> <span id="viewClientEmail">---</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Address</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-map-marker-alt text-gray-400 mr-2 w-4"></i> <span id="viewClientAddress">---</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Contract Start Date</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-calendar-alt text-gray-400 mr-2 w-4"></i> <span id="viewClientStart">---</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Guards Deployed</p>
+                        <p class="font-medium text-gray-900 flex items-center"><i class="fas fa-user-shield text-gray-400 mr-2 w-4"></i> <span id="viewClientGuards">---</span></p>
+                    </div>
+                </div>
+                <div class="mt-6 bg-brand-50 rounded-lg p-4 flex justify-between items-center border border-brand-100">
+                    <div>
+                        <p class="text-xs text-brand-600 uppercase tracking-wider mb-1">Monthly Rate</p>
+                        <p class="font-bold text-gray-900" id="viewClientRate">GHS 0.00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-brand-600 uppercase tracking-wider mb-1">Total Expected Revenue</p>
+                        <p class="text-xl font-bold text-brand-700" id="viewClientRevenue">GHS 0.00</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeViewClientModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Client Modal Overlay -->
+    <div id="addClientModal" class="fixed inset-0 bg-brand-900/70 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <!-- Modal Content Box -->
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="addClientModalInner">
+            
+            <!-- Modal Header -->
+            <div class="bg-brand-900 px-6 py-4 flex items-center justify-between border-b border-brand-700">
+                <h3 id="addClientModalTitle" class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-building mr-2 text-brand-500"></i> Register New Client
+                </h3>
+                <button type="button" onclick="closeAddClientModal()" class="text-gray-400 hover:text-white transition-colors focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Form -->
+            <form id="addClientForm" class="p-6">
+                <input type="hidden" id="editClientId" value="">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    <!-- Client Name -->
+                    <div class="md:col-span-1">
+                        <label for="clientName" class="block text-sm font-medium text-gray-700 mb-1">Client Name <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-briefcase absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="clientName" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="e.g. Zenith Bank Ltd">
+                        </div>
+                    </div>
+
+                    <!-- Contact Person -->
+                    <div class="md:col-span-1">
+                        <label for="clientContactPerson" class="block text-sm font-medium text-gray-700 mb-1">Contact Person <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="clientContactPerson" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="e.g. John Doe">
+                        </div>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="md:col-span-1">
+                        <label for="clientPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-phone absolute left-3 top-3 text-gray-400"></i>
+                            <input type="tel" id="clientPhone" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="Phone Number">
+                        </div>
+                    </div>
+
+                    <!-- Email Address -->
+                    <div class="md:col-span-1">
+                        <label for="clientEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                            <input type="email" id="clientEmail" class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="Email Address">
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="md:col-span-2">
+                        <label for="clientAddress" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <div class="relative">
+                            <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="clientAddress" class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="Physical Address">
+                        </div>
+                    </div>
+
+                    <!-- Contract Start Date -->
+                    <div class="md:col-span-1">
+                        <label for="clientStartDate" class="block text-sm font-medium text-gray-700 mb-1">Contract Start Date <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-calendar-alt absolute left-3 top-3 text-gray-400"></i>
+                            <input type="date" id="clientStartDate" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Monthly Rate -->
+                    <div class="md:col-span-1">
+                        <label for="clientMonthlyRate" class="block text-sm font-medium text-gray-700 mb-1">Monthly Rate (GHS) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-money-bill-wave absolute left-3 top-3 text-gray-400"></i>
+                            <input type="number" step="0.01" id="clientMonthlyRate" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="e.g. 5000.00">
+                        </div>
+                    </div>
+
+                    <!-- Number of Guards -->
+                    <div class="md:col-span-1">
+                        <label for="clientGuards" class="block text-sm font-medium text-gray-700 mb-1">Number of Guards <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-user-shield absolute left-3 top-3 text-gray-400"></i>
+                            <input type="number" id="clientGuards" required class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none bg-gray-50 focus:bg-white" placeholder="e.g. 5">
+                        </div>
+                    </div>
+
+                    <!-- Total Revenue -->
+                    <div class="md:col-span-1">
+                        <label for="clientTotalRevenue" class="block text-sm font-medium text-gray-700 mb-1">Total Revenue (GHS) <span class="text-gray-400 font-normal ml-1">(Auto-calculated)</span></label>
+                        <div class="relative">
+                            <i class="fas fa-chart-bar absolute left-3 top-3 text-gray-400"></i>
+                            <input type="number" step="0.01" id="clientTotalRevenue" readonly class="pl-10 w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-100 cursor-not-allowed focus:outline-none text-gray-500 font-semibold" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="mt-8 flex justify-end gap-3 pt-5 border-t border-gray-100">
+                    <button type="button" onclick="closeAddClientModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-all shadow-md flex items-center">
+                        <i class="fas fa-save mr-2"></i> Save Client
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Invoice Modal Overlay -->
+    <div id="addInvoiceModal" class="fixed inset-0 bg-brand-900/70 z-[70] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="addInvoiceModalInner">
+            <div class="bg-brand-900 px-6 py-4 flex items-center justify-between border-b border-brand-700 shrink-0">
+                <h3 id="addInvoiceModalTitle" class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-file-invoice-dollar mr-2 text-brand-500"></i> Generate New Invoice
+                </h3>
+                <button type="button" onclick="closeAddInvoiceModal()" class="text-gray-400 hover:text-white transition-colors focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto grow">
+                <form id="addInvoiceForm">
+                    <input type="hidden" id="editInvoiceId" value="">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number <span class="text-gray-400 font-normal ml-1">(Auto)</span></label>
+                            <input type="text" id="invNumber" readonly class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm font-semibold text-brand-700 outline-none cursor-not-allowed" placeholder="Auto-generated">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="invClientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" placeholder="e.g. Zenith Bank Ltd">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Billing Month <span class="text-red-500">*</span></label>
+                            <input type="month" id="invBillingMonth" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Date <span class="text-red-500">*</span></label>
+                            <input type="date" id="invDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Address <span class="text-red-500">*</span></label>
+                            <input type="text" id="invClientAddress" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Physical Address">
+                        </div>
+                    </div>
+
+                    <!-- Invoice Items Table -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold text-gray-900 border-l-4 border-brand-500 pl-2">Invoice Items</h4>
+                            <button type="button" onclick="addInvoiceItemRow()" class="text-xs bg-brand-100 text-brand-700 px-3 py-1.5 rounded hover:bg-brand-200 transition font-medium">
+                                <i class="fas fa-plus mr-1"></i> Add Row
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-brand-900 text-white text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th class="p-3 font-semibold border-b border-brand-800">Description</th>
+                                        <th class="p-3 font-semibold border-b border-l border-brand-800 w-24">Qty</th>
+                                        <th class="p-3 font-semibold border-b border-l border-brand-800 w-32">Rate (GHS)</th>
+                                        <th class="p-3 font-semibold border-b border-l border-brand-800 w-32">Amount (GHS)</th>
+                                        <th class="p-3 font-semibold border-b border-l border-brand-800 w-12 text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoice-items-body">
+                                    <!-- First row by default -->
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right font-medium text-gray-600 border-t border-gray-200">Subtotal:</td>
+                                        <td class="p-3 font-medium text-gray-800 border-t border-l border-gray-200 whitespace-nowrap">
+                                            <span id="invSubtotalDisplay">GHS 0.00</span>
+                                            <input type="hidden" id="invSubtotal" value="0">
+                                        </td>
+                                        <td class="border-t border-l border-gray-200"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right font-medium text-gray-600 border-t border-gray-200">GETFund Levy (2.5%):</td>
+                                        <td class="p-3 font-medium text-gray-800 border-t border-l border-gray-200 whitespace-nowrap">
+                                            <span id="invGETFundDisplay">GHS 0.00</span>
+                                            <input type="hidden" id="invGETFund" value="0">
+                                        </td>
+                                        <td class="border-t border-l border-gray-200"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right font-medium text-gray-600 border-t border-gray-200">NHIL (2.5%):</td>
+                                        <td class="p-3 font-medium text-gray-800 border-t border-l border-gray-200 whitespace-nowrap">
+                                            <span id="invNHILDisplay">GHS 0.00</span>
+                                            <input type="hidden" id="invNHIL" value="0">
+                                        </td>
+                                        <td class="border-t border-l border-gray-200"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right font-medium text-gray-600 border-t border-gray-200">VAT (15%):</td>
+                                        <td class="p-3 font-medium text-gray-800 border-t border-l border-gray-200 whitespace-nowrap">
+                                            <span id="invVATDisplay">GHS 0.00</span>
+                                            <input type="hidden" id="invVAT" value="0">
+                                        </td>
+                                        <td class="border-t border-l border-gray-200"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right font-bold text-gray-700 border-t border-gray-200">Grand Total:</td>
+                                        <td class="p-3 font-bold text-brand-700 border-t border-l border-gray-200 whitespace-nowrap">
+                                            <span id="invTotalAmountDisplay">GHS 0.00</span>
+                                            <input type="hidden" id="invTotalAmount" value="0">
+                                        </td>
+                                        <td class="border-t border-l border-gray-200"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-end gap-3 pt-5 border-t border-gray-100">
+                        <button type="button" onclick="closeAddInvoiceModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-md flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i> Save Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Invoice Modal Overlay -->
+    <div id="viewInvoiceModal" class="fixed inset-0 bg-brand-900/70 z-[80] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="viewInvoiceModalInner">
+            <div class="bg-brand-900 px-6 py-4 flex items-center justify-between border-b border-brand-700 shrink-0">
+                <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-file-invoice mr-2 text-brand-500"></i> Invoice Details
+                </h3>
+                <button type="button" onclick="closeViewInvoiceModal()" class="text-gray-400 hover:text-white transition-colors focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-8 overflow-y-auto grow relative" id="printableInvoiceArea">
+                
+                <!-- Background PAID Stamp (Hidden by default, shown for Receipts) -->
+                <div id="vInvReceiptStamp" class="hidden absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-12 pointer-events-none z-0" style="opacity: 0.1;">
+                    <span class="text-[90px] font-black text-green-600 border-[10px] border-green-600 px-10 py-6 rounded-3xl uppercase tracking-widest whitespace-nowrap">PAID IN FULL</span>
+                </div>
+
+                <div class="flex justify-between items-start border-b border-gray-200 pb-6 mb-6 relative z-10">
+                    <div class="flex items-start gap-4 text-left">
+                        <!-- Company Logo Placeholder -->
+                        <img src="https://placehold.co/80x80/0A192F/D4AF37?text=DKB" alt="DKB Anchor Logo" class="w-16 h-16 rounded-md shadow-sm border border-gray-200 object-cover hidden sm:block">
+                        
+                        <!-- Company Details -->
+                        <div>
+                            <h1 class="text-xl font-bold text-[#D4AF37] leading-tight uppercase">DKB Anchor</h1>
+                            <p class="text-xs text-gray-500 font-medium mb-1">Security Services</p>
+                            <p class="text-[11px] text-gray-600">Mile 7 Opposite Ruttchen Trucks Gh. Ltd,</p>
+                            <p class="text-[11px] text-gray-600">Near Mile 7 police Station Accra Ghana.</p>
+                            <p class="text-[11px] text-gray-600 mt-1"><span class="font-medium text-gray-800">Contacts:</span> 0247071531 / 0592610876</p>
+                        </div>
+                    </div>
+                    <div class="text-right relative z-10">
+                        <h2 id="vInvTitle" class="text-3xl font-bold text-brand-900 uppercase tracking-wider">INVOICE</h2>
+                        <p class="text-brand-600 mt-1 font-bold text-lg" id="vInvNumber">#INV-00000</p>
+                        <p class="text-gray-500 mt-1 font-medium" id="vInvStatus">Status: Draft</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8 mb-8 relative z-10">
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Billed To:</h3>
+                        <p class="text-lg font-bold text-gray-900" id="vInvClientName">Client Name</p>
+                        <p class="text-sm text-gray-600 mt-1" id="vInvClientAddress">Client Address</p>
+                    </div>
+                    <div class="text-right">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Invoice Details:</h3>
+                        <p class="text-sm text-gray-600"><span class="font-semibold text-gray-800">Invoice Date:</span> <span id="vInvDate">--</span></p>
+                        <p class="text-sm text-gray-600 mt-1"><span class="font-semibold text-gray-800">Billing Month:</span> <span id="vInvMonth">--</span></p>
+                    </div>
+                </div>
+
+                <table class="w-full text-left border-collapse mb-6">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-600">
+                        <tr>
+                            <th class="p-3 border-y border-gray-200">Description</th>
+                            <th class="p-3 border-y border-gray-200 text-center w-24">Qty</th>
+                            <th class="p-3 border-y border-gray-200 text-right w-32">Rate</th>
+                            <th class="p-3 border-y border-gray-200 text-right w-32">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vInvItems" class="text-sm divide-y divide-gray-100">
+                        <!-- Items populated dynamically -->
+                    </tbody>
+                </table>
+
+                <div class="flex justify-end">
+                    <div class="w-full sm:w-1/2">
+                        <div class="flex justify-between py-2 text-sm border-b border-gray-100">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium text-gray-900" id="vInvSubtotal">GHS 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-2 text-sm border-b border-gray-100">
+                            <span class="text-gray-600">GETFund Levy (2.5%):</span>
+                            <span class="font-medium text-gray-900" id="vInvGetfund">GHS 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-2 text-sm border-b border-gray-100">
+                            <span class="text-gray-600">NHIL (2.5%):</span>
+                            <span class="font-medium text-gray-900" id="vInvNhil">GHS 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-2 text-sm border-b border-gray-200">
+                            <span class="text-gray-600">VAT (15%):</span>
+                            <span class="font-medium text-gray-900" id="vInvVat">GHS 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-3 text-lg">
+                            <span class="font-bold text-gray-800">Grand Total:</span>
+                            <span class="font-bold text-brand-700" id="vInvTotal">GHS 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+                <button onclick="closeViewInvoiceModal()" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition font-medium text-sm">Close</button>
+                <button onclick="window.print()" class="px-5 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition font-medium text-sm flex items-center">
+                    <i class="fas fa-print mr-2"></i> Print Invoice
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Application Logic -->
+    <script>
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const pageTitle = document.getElementById('page-title');
+        
+        // Mobile Sidebar Toggle
+        window.toggleSidebar = function() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
+        // Tab Switching Logic
+        window.switchTab = function(tabId) {
+            // 1. Reset all nav links to default style
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.className = 'nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-brand-800 hover:text-white border-l-4 border-transparent transition-all-ease';
+            });
+
+            // 2. Highlight active nav link
+            const activeLink = document.getElementById(`nav-${tabId}`);
+            if(activeLink) {
+                activeLink.className = 'nav-link flex items-center gap-3 px-4 py-3 rounded-lg bg-brand-800 text-brand-500 border-l-4 border-brand-500 font-medium transition-all-ease';
+                
+                // Update page title
+                let titleText = activeLink.querySelector('span').innerText;
+                if(tabId === 'gra' || tabId === 'ssnit') {
+                    titleText += ' Statutory Records'; // Adding context for GRA/SSNIT
+                }
+                pageTitle.innerText = titleText;
+            }
+
+            // 3. Show/Hide Content Views
+            const dashboardView = document.getElementById('view-dashboard');
+            const clientsView = document.getElementById('view-clients');
+            const invoicesView = document.getElementById('view-invoices');
+            const placeholderView = document.getElementById('view-placeholder');
+            
+            // Hide all views initially
+            dashboardView.classList.add('hidden');
+            dashboardView.classList.remove('block', 'space-y-6');
+            
+            if(clientsView) {
+                clientsView.classList.add('hidden');
+                clientsView.classList.remove('block', 'space-y-6');
+            }
+            if(invoicesView) {
+                invoicesView.classList.add('hidden');
+                invoicesView.classList.remove('block', 'space-y-6');
+            }
+            
+            placeholderView.classList.add('hidden');
+            
+            if(tabId === 'dashboard') {
+                dashboardView.classList.remove('hidden');
+                dashboardView.classList.add('block', 'space-y-6');
+            } else if (tabId === 'clients') {
+                if(clientsView) {
+                    clientsView.classList.remove('hidden');
+                    clientsView.classList.add('block', 'space-y-6');
+                }
+            } else if (tabId === 'invoices') {
+                if(invoicesView) {
+                    invoicesView.classList.remove('hidden');
+                    invoicesView.classList.add('block', 'space-y-6');
+                }
+            } else {
+                placeholderView.classList.remove('hidden');
+                
+                // Update placeholder content based on clicked tab
+                document.getElementById('placeholder-title').innerText = tabId.replace('-', ' ');
+                
+                // Switch icon based on tab
+                const iconMap = {
+                    'clients': 'fa-users',
+                    'payroll': 'fa-money-check-alt',
+                    'expenditure': 'fa-chart-line',
+                    'invoices': 'fa-file-invoice-dollar',
+                    'gra': 'fa-landmark',
+                    'ssnit': 'fa-shield-alt'
+                };
+                
+                const iconElem = document.getElementById('placeholder-icon');
+                iconElem.className = `fas ${iconMap[tabId] || 'fa-tools'} text-3xl text-brand-600`;
+            }
+
+            // 4. Close mobile sidebar after clicking a link
+            if (window.innerWidth < 1024) { // lg breakpoint
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
+
+        // --- Modal Logic ---
+        const clientModal = document.getElementById('addClientModal');
+        const clientModalInner = document.getElementById('addClientModalInner');
+        const clientForm = document.getElementById('addClientForm');
+
+        // Auto-calculate Total Revenue based on guards and monthly rate
+        const guardsInput = document.getElementById('clientGuards');
+        const rateInput = document.getElementById('clientMonthlyRate');
+        const revenueInput = document.getElementById('clientTotalRevenue');
+
+        function calculateTotalRevenue() {
+            const guards = parseInt(guardsInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            revenueInput.value = (guards * rate).toFixed(2);
+        }
+
+        guardsInput.addEventListener('input', calculateTotalRevenue);
+        rateInput.addEventListener('input', calculateTotalRevenue);
+
+        window.openAddClientModal = function(isEdit = false) {
+            if (isEdit !== true) {
+                clientForm.reset();
+                document.getElementById('editClientId').value = '';
+                document.getElementById('addClientModalTitle').innerHTML = '<i class="fas fa-building mr-2 text-brand-500"></i> Register New Client';
+            }
+            
+            // Unhide the modal background
+            clientModal.classList.remove('hidden');
+            
+            // Small delay to allow the DOM to register 'display: block' before transitioning opacity/scale
+            setTimeout(() => {
+                clientModal.classList.remove('opacity-0');
+                clientModalInner.classList.remove('scale-95');
+                clientModalInner.classList.add('scale-100');
+            }, 10);
+        };
+
+        window.closeAddClientModal = function() {
+            // Start exit transition
+            clientModal.classList.add('opacity-0');
+            clientModalInner.classList.remove('scale-100');
+            clientModalInner.classList.add('scale-95');
+            
+            // Wait for transition to finish before hiding display
+            setTimeout(() => {
+                clientModal.classList.add('hidden');
+                clientForm.reset(); // Clear the form on close
+            }, 300); // 300ms matches the Tailwind duration-300 utility
+        };
+
+        // Close modal when clicking outside the box
+        clientModal.addEventListener('click', function(e) {
+            if (e.target === clientModal) {
+                window.closeAddClientModal();
+            }
+        });
+
+        // Toast Notification System
+        window.showToast = function(message, type = 'error') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Set styles based on success or error
+            const bgColor = type === 'error' ? 'bg-red-600' : 'bg-green-600';
+            const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+            
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3 transform transition-all duration-300 translate-y-10 opacity-0 max-w-md w-full pointer-events-auto`;
+            toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span class="text-sm font-medium">${message}</span>`;
+            
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+            
+            // Remove after 6 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 6000);
+        };
+
+        // --- Invoice Modal & Logic ---
+        const invoiceModal = document.getElementById('addInvoiceModal');
+        const invoiceModalInner = document.getElementById('addInvoiceModalInner');
+        const invoiceForm = document.getElementById('addInvoiceForm');
+
+        window.generateInvoiceNumber = function() {
+            const randomNum = Math.floor(10000 + Math.random() * 90000);
+            return `INV-${randomNum}`;
+        };
+
+        window.openAddInvoiceModal = function(isEdit = false) {
+            if (isEdit !== true) {
+                invoiceForm.reset();
+                document.getElementById('editInvoiceId').value = '';
+                document.getElementById('invNumber').value = window.generateInvoiceNumber();
+                document.getElementById('invoice-items-body').innerHTML = '';
+                document.getElementById('addInvoiceModalTitle').innerHTML = '<i class="fas fa-file-invoice-dollar mr-2 text-brand-500"></i> Generate New Invoice';
+                window.addInvoiceItemRow(); // Add one blank row by default
+                window.calculateInvoiceTotal();
+            }
+
+            invoiceModal.classList.remove('hidden');
+            setTimeout(() => {
+                invoiceModal.classList.remove('opacity-0');
+                invoiceModalInner.classList.remove('scale-95');
+                invoiceModalInner.classList.add('scale-100');
+            }, 10);
+        };
+
+        window.closeAddInvoiceModal = function() {
+            invoiceModal.classList.add('opacity-0');
+            invoiceModalInner.classList.remove('scale-100');
+            invoiceModalInner.classList.add('scale-95');
+            setTimeout(() => {
+                invoiceModal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.addInvoiceItemRow = function(desc = '', qty = 1, rate = 0) {
+            const tbody = document.getElementById('invoice-items-body');
+            const tr = document.createElement('tr');
+            tr.className = "invoice-item-row bg-white";
+            
+            // Safe encoding for default string values
+            const safeDesc = desc.replace(/"/g, '&quot;');
+            
+            tr.innerHTML = `
+                <td class="p-2 border-b border-gray-200"><input type="text" placeholder="Service description..." required class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-brand-500 item-desc" value="${safeDesc}"></td>
+                <td class="p-2 border-b border-l border-gray-200"><input type="number" min="1" required class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-brand-500 item-qty" value="${qty}" oninput="calculateInvoiceTotal()"></td>
+                <td class="p-2 border-b border-l border-gray-200"><input type="number" step="0.01" required class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-brand-500 item-rate" value="${rate}" oninput="calculateInvoiceTotal()"></td>
+                <td class="p-2 border-b border-l border-gray-200"><input type="number" readonly class="w-full px-2 py-1.5 border border-transparent rounded text-sm bg-gray-50 text-gray-600 font-medium item-amount" value="${(qty * rate).toFixed(2)}"></td>
+                <td class="p-2 border-b border-l border-gray-200 text-center"><button type="button" onclick="this.closest('tr').remove(); calculateInvoiceTotal()" class="text-red-400 hover:text-red-600 transition p-1"><i class="fas fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        };
+
+        window.calculateInvoiceTotal = function() {
+            let subtotal = 0;
+            document.querySelectorAll('.invoice-item-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+                const amount = qty * rate;
+                row.querySelector('.item-amount').value = amount.toFixed(2);
+                subtotal += amount;
+            });
+            
+            // Standard statutory calculations (Calculated directly on the base Subtotal)
+            const getfund = subtotal * 0.025;
+            const nhil = subtotal * 0.025;
+            const vat = subtotal * 0.15; // 15% flat on Subtotal
+            
+            const grandTotal = subtotal + getfund + nhil + vat;
+
+            // Update hidden inputs for database storage
+            document.getElementById('invSubtotal').value = subtotal.toFixed(2);
+            document.getElementById('invGETFund').value = getfund.toFixed(2);
+            document.getElementById('invNHIL').value = nhil.toFixed(2);
+            document.getElementById('invVAT').value = vat.toFixed(2);
+            document.getElementById('invTotalAmount').value = grandTotal.toFixed(2);
+
+            // Format for display
+            const formatCurr = (val) => 'GHS ' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            document.getElementById('invSubtotalDisplay').innerText = formatCurr(subtotal);
+            document.getElementById('invGETFundDisplay').innerText = formatCurr(getfund);
+            document.getElementById('invNHILDisplay').innerText = formatCurr(nhil);
+            document.getElementById('invVATDisplay').innerText = formatCurr(vat);
+            document.getElementById('invTotalAmountDisplay').innerText = formatCurr(grandTotal);
+        };
+
+        invoiceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const origText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+            const items = [];
+            document.querySelectorAll('.invoice-item-row').forEach(row => {
+                items.push({
+                    description: row.querySelector('.item-desc').value,
+                    qty: parseFloat(row.querySelector('.item-qty').value) || 0,
+                    rate: parseFloat(row.querySelector('.item-rate').value) || 0,
+                    amount: parseFloat(row.querySelector('.item-amount').value) || 0
+                });
+            });
+
+            const invoiceData = {
+                invoiceNumber: document.getElementById('invNumber').value,
+                clientName: document.getElementById('invClientName').value,
+                billingMonth: document.getElementById('invBillingMonth').value,
+                date: document.getElementById('invDate').value,
+                clientAddress: document.getElementById('invClientAddress').value,
+                items: items,
+                subtotal: parseFloat(document.getElementById('invSubtotal').value) || 0,
+                getfund: parseFloat(document.getElementById('invGETFund').value) || 0,
+                nhil: parseFloat(document.getElementById('invNHIL').value) || 0,
+                vat: parseFloat(document.getElementById('invVAT').value) || 0,
+                totalAmount: parseFloat(document.getElementById('invTotalAmount').value) || 0,
+                status: 'Draft',
+                updatedAt: new Date().toISOString()
+            };
+
+            const editId = document.getElementById('editInvoiceId').value;
+            
+            if (editId && window.updateInvoiceInDB) {
+                const success = await window.updateInvoiceInDB(editId, invoiceData);
+                if (success) {
+                    window.closeAddInvoiceModal();
+                }
+            } else if (window.saveInvoiceToDB) {
+                invoiceData.createdAt = invoiceData.updatedAt;
+                const success = await window.saveInvoiceToDB(invoiceData);
+                if (success) {
+                    window.closeAddInvoiceModal();
+                    window.showToast("Invoice generated successfully!", "success");
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origText;
+        });
+
+        // --- Invoice Action Buttons Logic ---
+        const viewInvoiceModal = document.getElementById('viewInvoiceModal');
+        const viewInvoiceModalInner = document.getElementById('viewInvoiceModalInner');
+
+        window.closeViewInvoiceModal = function() {
+            viewInvoiceModal.classList.add('opacity-0');
+            viewInvoiceModalInner.classList.remove('scale-100');
+            viewInvoiceModalInner.classList.add('scale-95');
+            setTimeout(() => {
+                viewInvoiceModal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.formatBillingMonth = function(yyyymm) {
+            if (!yyyymm) return 'N/A';
+            const parts = yyyymm.split('-');
+            if (parts.length !== 2) return yyyymm;
+            const date = new Date(parts[0], parts[1] - 1);
+            return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+        };
+
+        window.viewInvoice = function(id, preventModalOpen = false, isReceipt = false) {
+            const inv = window.invoicesDataCache && window.invoicesDataCache[id];
+            if (!inv) {
+                window.showToast("Invoice data not found.", "error");
+                return;
+            }
+
+            const formatCurr = (val) => 'GHS ' + parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Handle dynamically changing between standard Invoice and Receipt
+            const titleElem = document.getElementById('vInvTitle');
+            const stampElem = document.getElementById('vInvReceiptStamp');
+            
+            if (titleElem && stampElem) {
+                if (isReceipt) {
+                    titleElem.innerText = 'OFFICIAL RECEIPT';
+                    stampElem.classList.remove('hidden');
+                } else {
+                    titleElem.innerText = 'INVOICE';
+                    stampElem.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('vInvNumber').innerText = '#' + (inv.invoiceNumber || 'INV-XXXXX');
+            document.getElementById('vInvClientName').innerText = inv.clientName || 'N/A';
+            document.getElementById('vInvClientAddress').innerText = inv.clientAddress || 'N/A';
+            document.getElementById('vInvDate').innerText = inv.date || 'N/A';
+            document.getElementById('vInvMonth').innerText = window.formatBillingMonth(inv.billingMonth) || 'N/A';
+            document.getElementById('vInvStatus').innerText = 'Status: ' + (inv.status || 'Draft');
+            
+            document.getElementById('vInvSubtotal').innerText = formatCurr(inv.subtotal);
+            document.getElementById('vInvGetfund').innerText = formatCurr(inv.getfund);
+            document.getElementById('vInvNhil').innerText = formatCurr(inv.nhil);
+            document.getElementById('vInvVat').innerText = formatCurr(inv.vat);
+            document.getElementById('vInvTotal').innerText = formatCurr(inv.totalAmount);
+
+            const tbody = document.getElementById('vInvItems');
+            tbody.innerHTML = '';
+            if (inv.items && inv.items.length > 0) {
+                inv.items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-3">${item.description}</td>
+                        <td class="p-3 text-center">${item.qty}</td>
+                        <td class="p-3 text-right">${formatCurr(item.rate)}</td>
+                        <td class="p-3 text-right font-medium">${formatCurr(item.amount)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            if (!preventModalOpen) {
+                viewInvoiceModal.classList.remove('hidden');
+                setTimeout(() => {
+                    viewInvoiceModal.classList.remove('opacity-0');
+                    viewInvoiceModalInner.classList.remove('scale-95');
+                    viewInvoiceModalInner.classList.add('scale-100');
+                }, 10);
+            }
+        };
+
+        window.editInvoice = function(id) {
+            const inv = window.invoicesDataCache && window.invoicesDataCache[id];
+            if (!inv) return window.showToast("Invoice data not found.", "error");
+
+            document.getElementById('editInvoiceId').value = id;
+            document.getElementById('invNumber').value = inv.invoiceNumber || window.generateInvoiceNumber();
+            document.getElementById('invClientName').value = inv.clientName || '';
+            document.getElementById('invBillingMonth').value = inv.billingMonth || '';
+            document.getElementById('invDate').value = inv.date || '';
+            document.getElementById('invClientAddress').value = inv.clientAddress || '';
+
+            const tbody = document.getElementById('invoice-items-body');
+            tbody.innerHTML = '';
+            
+            if (inv.items && inv.items.length > 0) {
+                inv.items.forEach(item => {
+                    window.addInvoiceItemRow(item.description, item.qty, item.rate);
+                });
+            } else {
+                window.addInvoiceItemRow();
+            }
+
+            document.getElementById('addInvoiceModalTitle').innerHTML = '<i class="fas fa-edit mr-2 text-amber-500"></i> Edit Invoice';
+            window.calculateInvoiceTotal();
+            window.openAddInvoiceModal(true);
+        };
+
+        window.printInvoice = function(id) {
+            // First load it into the view modal, then trigger the print command
+            window.viewInvoice(id);
+            setTimeout(() => {
+                window.print();
+            }, 500); // short delay to ensure modal is visible for standard print logic to capture
+        };
+        
+        window.downloadInvoice = function(id) {
+            const inv = window.invoicesDataCache && window.invoicesDataCache[id];
+            if (!inv) {
+                window.showToast("Invoice data not found.", "error");
+                return;
+            }
+            
+            window.showToast("Generating PDF... Please wait.", "success");
+
+            // Silently populate the invoice template in the background
+            window.viewInvoice(id, true, false);
+
+            // Wait for DOM to update and layout to calculate
+            setTimeout(() => {
+                const elementToPrint = document.getElementById('printableInvoiceArea');
+                
+                // Create a temporary wrapper to hold the clone for rendering
+                // We position it IN the viewport but BEHIND the app so html2canvas renders it properly
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = window.scrollY + 'px'; // Align with current scroll position
+                wrapper.style.left = '0';
+                wrapper.style.width = '800px'; // Force a nice desktop width for the PDF layout
+                wrapper.style.background = '#ffffff';
+                wrapper.style.zIndex = '-9999'; // Hide it behind the main application
+
+                // Clone the populated printable area and append it
+                const clone = elementToPrint.cloneNode(true);
+                clone.style.padding = '40px'; // Add padding specifically for the PDF
+                wrapper.appendChild(clone);
+                document.body.appendChild(wrapper);
+
+                const pdfOptions = {
+                    margin:       0.2,
+                    filename:     `${inv.invoiceNumber || 'Invoice'}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Generate and trigger download
+                html2pdf().set(pdfOptions).from(wrapper).save().then(() => {
+                    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+                    window.showToast("Invoice downloaded successfully!", "success");
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+                    window.showToast("An error occurred during PDF generation.", "error");
+                });
+            }, 800); // 800ms delay guarantees the HTML is fully painted before capturing
+        };
+
+        window.downloadReceipt = function(id) {
+            const inv = window.invoicesDataCache && window.invoicesDataCache[id];
+            if (!inv) {
+                window.showToast("Invoice data not found.", "error");
+                return;
+            }
+            
+            window.showToast("Generating Receipt... Please wait.", "success");
+
+            // Silently populate the template in the background as a RECEIPT
+            window.viewInvoice(id, true, true);
+
+            // Wait for DOM to update and layout to calculate
+            setTimeout(() => {
+                const elementToPrint = document.getElementById('printableInvoiceArea');
+                
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = window.scrollY + 'px'; // Align with current scroll position
+                wrapper.style.left = '0';
+                wrapper.style.width = '800px'; 
+                wrapper.style.background = '#ffffff';
+                wrapper.style.zIndex = '-9999'; // Hide it behind the main application
+
+                const clone = elementToPrint.cloneNode(true);
+                clone.style.padding = '40px'; 
+                wrapper.appendChild(clone);
+                document.body.appendChild(wrapper);
+
+                const pdfOptions = {
+                    margin:       0.2,
+                    filename:     `Receipt_${inv.invoiceNumber || 'INV'}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, allowTaint: true },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Generate and trigger download
+                html2pdf().set(pdfOptions).from(wrapper).save().then(() => {
+                    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+                    window.showToast("Receipt downloaded successfully!", "success");
+                    // Revert the hidden layout back to a standard invoice
+                    window.viewInvoice(id, true, false); 
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+                    window.showToast("An error occurred during Receipt generation.", "error");
+                });
+            }, 800);
+        };
+
+        // Form Submit Handler
+        clientForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Disable button and show loading state to prevent double-clicks
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+            
+            const guards = parseInt(document.getElementById('clientGuards').value) || 0;
+            const rate = parseFloat(document.getElementById('clientMonthlyRate').value) || 0;
+
+            const newClientData = {
+                name: document.getElementById('clientName').value,
+                contactPerson: document.getElementById('clientContactPerson').value,
+                phone: document.getElementById('clientPhone').value,
+                email: document.getElementById('clientEmail').value,
+                address: document.getElementById('clientAddress').value,
+                startDate: document.getElementById('clientStartDate').value,
+                monthlyRate: rate,
+                numberOfGuards: guards,
+                totalRevenue: rate * guards, // Force strict calculation before saving
+                status: 'Active',
+                updatedAt: new Date().toISOString()
+            };
+            
+            const editId = document.getElementById('editClientId').value;
+            let saveSuccess = false;
+            
+            // Call the global Firebase function if it's ready
+            if (editId && window.updateClientInDB) {
+                saveSuccess = await window.updateClientInDB(editId, newClientData);
+            } else if (!editId && window.saveClientToDB) {
+                newClientData.createdAt = newClientData.updatedAt; // Set creation date only for new
+                saveSuccess = await window.saveClientToDB(newClientData);
+            }
+            
+            // Restore button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
+            // Close the modal upon saving only if successful
+            if (saveSuccess !== false) {
+                window.closeAddClientModal();
+                window.showToast("Client successfully saved to database!", "success");
+            }
+        });
+
+        // --- Client Action Buttons ---
+        const viewModal = document.getElementById('viewClientModal');
+        const viewModalInner = document.getElementById('viewClientModalInner');
+
+        window.closeViewClientModal = function() {
+            viewModal.classList.add('opacity-0');
+            viewModalInner.classList.remove('scale-100');
+            viewModalInner.classList.add('scale-95');
+            setTimeout(() => {
+                viewModal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.viewClient = function(id) {
+            const client = window.clientsDataCache && window.clientsDataCache[id];
+            if (!client) {
+                window.showToast("Client data not found.", "error");
+                return;
+            }
+
+            // Populate view modal
+            document.getElementById('viewClientName').innerText = client.name || 'N/A';
+            document.getElementById('viewClientInitials').innerText = (client.name || 'NA').substring(0, 2);
+            document.getElementById('viewClientStatus').innerText = client.status || 'Active';
+            document.getElementById('viewClientContact').innerText = client.contactPerson || 'N/A';
+            document.getElementById('viewClientPhone').innerText = client.phone || 'N/A';
+            document.getElementById('viewClientEmail').innerText = client.email || 'N/A';
+            document.getElementById('viewClientAddress').innerText = client.address || 'N/A';
+            document.getElementById('viewClientStart').innerText = client.startDate || 'N/A';
+            document.getElementById('viewClientGuards').innerText = client.numberOfGuards || '0';
+            
+            const rate = parseFloat(client.monthlyRate) || 0;
+            const rev = parseFloat(client.totalRevenue) || (rate * (parseInt(client.numberOfGuards)||0));
+            
+            document.getElementById('viewClientRate').innerText = 'GHS ' + rate.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('viewClientRevenue').innerText = 'GHS ' + rev.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+            viewModal.classList.remove('hidden');
+            setTimeout(() => {
+                viewModal.classList.remove('opacity-0');
+                viewModalInner.classList.remove('scale-95');
+                viewModalInner.classList.add('scale-100');
+            }, 10);
+        };
+
+        window.editClient = function(id) {
+            const client = window.clientsDataCache && window.clientsDataCache[id];
+            if (!client) {
+                window.showToast("Client data not found.", "error");
+                return;
+            }
+
+            // Populate form
+            document.getElementById('editClientId').value = id;
+            document.getElementById('clientName').value = client.name || '';
+            document.getElementById('clientContactPerson').value = client.contactPerson || '';
+            document.getElementById('clientPhone').value = client.phone || '';
+            document.getElementById('clientEmail').value = client.email || '';
+            document.getElementById('clientAddress').value = client.address || '';
+            document.getElementById('clientStartDate').value = client.startDate || '';
+            document.getElementById('clientMonthlyRate').value = client.monthlyRate || '';
+            document.getElementById('clientGuards').value = client.numberOfGuards || '';
+            
+            calculateTotalRevenue();
+
+            // Update title & open modal
+            document.getElementById('addClientModalTitle').innerHTML = '<i class="fas fa-edit mr-2 text-amber-500"></i> Edit Client Details';
+            window.openAddClientModal(true);
+        };
+
+        window.deleteClient = function(id) {
+            // Note: In a full production build, a custom HTML modal would be used here to confirm deletion.
+            // Executing deletion immediately and showing a toast notification.
+            if (window.deleteClientFromDB) {
+                window.deleteClientFromDB(id);
+            }
+        };
+
+        // --- Live Clock Logic ---
+        function updateClock() {
+            const clockElement = document.getElementById('live-clock');
+            if (!clockElement) return;
+
+            const now = new Date();
+            
+            // Format: "Thursday, Nov 12, 2026"
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-US', dateOptions);
+            
+            // Format: "07:30:15 PM"
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            const timeString = now.toLocaleTimeString('en-US', timeOptions);
+            
+            clockElement.innerText = `${dateString} | ${timeString}`;
+        }
+
+        // Initialize clock immediately, then update every second (1000ms)
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        // --- Chart.js Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('revenueChart');
+            if (ctx) {
+                window.revenueChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        datasets: [{
+                            label: 'Revenue (GHS)',
+                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Replaced dynamically by Firebase
+                            borderColor: '#3B82F6', // Tailwind brand-500
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#0A192F', // Tailwind brand-900
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#3B82F6',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4 // Creates smooth curves
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // Hide default legend for a cleaner look
+                            },
+                            tooltip: {
+                                backgroundColor: '#112240',
+                                titleFont: { size: 13, family: "'Inter', sans-serif" },
+                                bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
+                                padding: 12,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += 'GHS ' + context.parsed.y.toLocaleString();
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                border: { display: false },
+                                grid: {
+                                    color: '#f3f4f6', // gray-100
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    color: '#6b7280', // gray-500
+                                    font: { family: "'Inter', sans-serif", size: 12 },
+                                    padding: 10,
+                                    callback: function(value) {
+                                        if (value >= 1000) {
+                                            return 'GHS ' + (value / 1000) + 'k';
+                                        }
+                                        return 'GHS ' + value;
+                                    }
+                                }
+                            },
+                            x: {
+                                border: { display: false },
+                                grid: {
+                                    display: false, // Remove vertical grid lines
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    color: '#6b7280',
+                                    font: { family: "'Inter', sans-serif", size: 12 },
+                                    padding: 10
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Firebase Real-time Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeFirestore, doc, collection, onSnapshot, addDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // User Provided Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5jLIoOpFJpFB1XE9rhTky9C9UXG67yzQ",
+            authDomain: "dkb-anchor-account.firebaseapp.com",
+            projectId: "dkb-anchor-account",
+            storageBucket: "dkb-anchor-account.firebasestorage.app",
+            messagingSenderId: "965148707434",
+            appId: "1:965148707434:web:1eca4a16d25e17075d1813",
+            measurementId: "G-4680PY0MYF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Force long polling to bypass WebSocket connection issues in preview environments
+        const db = initializeFirestore(app, {
+            experimentalForceLongPolling: true
+        });
+
+        // Required strict path variable
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dkb-anchor-default';
+
+        async function initApp() {
+            try {
+                // Attempt anonymous auth (Requires Anonymous provider to be enabled in Firebase Console)
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.warn("Firebase Auth warning (Auth might not be enabled in your console). Proceeding with unauthenticated database access...", error);
+            }
+            // Initialize database listeners regardless of auth state 
+            // (Note: Your Firestore Rules must allow public read/writes for this to work)
+            setupRealtimeListeners();
+        }
+
+        function setupRealtimeListeners() {
+            // Removed strict !auth.currentUser check to allow public database access
+            
+            // Helper function to format currency as GHS 15,200.00
+            const formatGHS = (value) => {
+                const num = parseFloat(value) || 0;
+                return 'GHS ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+
+            // Shared state for Net Profit calculation
+            let currentMetrics = { expenditure: 0, salaries: 0, gra: 0, ssnit: 0 };
+            let currentTotalRevenue = 0;
+
+            const calculateAndDisplayNetProfit = () => {
+                const netProfit = currentTotalRevenue - currentMetrics.expenditure - currentMetrics.salaries - currentMetrics.gra - currentMetrics.ssnit;
+                const profitElement = document.getElementById('val-profit');
+                if (profitElement) {
+                    profitElement.innerHTML = formatGHS(netProfit);
+                }
+            };
+
+            // 1. Listen to Dashboard Financial Metrics Document (Rule 1 Strict Path)
+            const statsRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard', 'financial_metrics');
+            
+            onSnapshot(statsRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Update Metric Cards dynamically with formatting
+                    // Note: 'revenue' is wired dynamically from clients table, 'invoices' from invoices table
+                    document.getElementById('val-expenditure').innerHTML = formatGHS(data.expenditure);
+                    document.getElementById('val-salaries').innerHTML = formatGHS(data.salaries);
+                    
+                    // Update metrics state for profit calculation
+                    currentMetrics.salaries = data.salaries || 0;
+                    currentMetrics.gra = data.gra || 0;
+                    currentMetrics.ssnit = data.ssnit || 0;
+                    
+                    calculateAndDisplayNetProfit();
+                    
+                    // Update Chart Data dynamically from monthly_revenue array
+                    if (data.monthly_revenue && window.revenueChartInstance) {
+                        window.revenueChartInstance.data.datasets[0].data = data.monthly_revenue;
+                        window.revenueChartInstance.update();
+                    }
+                } else {
+                    // Seed defaults if missing so the dashboard doesn't look empty on first load
+                    setDoc(statsRef, {
+                        expenditure: 215650.75,
+                        salaries: 150000.00,
+                        gra: 15500.00,
+                        ssnit: 12000.00,
+                        monthly_revenue: [310500, 325000, 340200, 335000, 360800, 385000, 390000, 405000, 415000, 420000, 425800, null]
+                    });
+                }
+            }, (error) => console.error("Stats listener error:", error));
+
+            // 2. Listen to Clients Collection (Rule 1 Strict Path & Rule 2 Simple Query)
+            const clientsRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+            
+            onSnapshot(clientsRef, (snapshot) => {
+                const tbody = document.getElementById('clients-table-body');
+                tbody.innerHTML = '';
+                
+                // Initialize clients cache for view/edit functionality
+                window.clientsDataCache = {};
+                
+                // Update Clients Metric Card & Header Counter
+                document.getElementById('val-clients').innerHTML = snapshot.size;
+                const counter = document.getElementById('total-clients-counter');
+                if(counter) counter.innerText = `Total: ${snapshot.size} Active`;
+
+                let aggregateTotalRevenue = 0; // Track the sum of all client revenues
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-gray-400 italic">No clients found. Click 'Add Client' to begin.</td></tr>`;
+                    document.getElementById('val-revenue').innerHTML = formatGHS(0); // Set revenue to 0 if no clients
+                    currentTotalRevenue = 0;
+                    calculateAndDisplayNetProfit();
+                    return;
+                }
+
+                snapshot.forEach(docSnap => {
+                    const client = docSnap.data();
+                    const clientId = docSnap.id;
+                    
+                    window.clientsDataCache[clientId] = client;
+                    
+                    // Automatically calculate revenue for display
+                    const guardsCount = client.numberOfGuards || 0;
+                    const monthlyRate = client.monthlyRate || 0;
+                    const calculatedRevenue = guardsCount * monthlyRate;
+                    
+                    aggregateTotalRevenue += calculatedRevenue; // Add client's revenue to the grand total
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'bg-white hover:bg-gray-50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="p-4 text-gray-900 font-medium whitespace-nowrap">${client.name || 'N/A'}</td>
+                        <td class="p-4 text-gray-600">${client.contactPerson || 'N/A'}</td>
+                        <td class="p-4 text-gray-600">${client.phone || 'N/A'}</td>
+                        <td class="p-4 text-gray-600">${client.address || 'N/A'}</td>
+                        <td class="p-4 text-gray-600">${client.email || 'N/A'}</td>
+                        <td class="p-4 text-gray-600">${client.startDate || 'N/A'}</td>
+                        <td class="p-4 text-gray-600 font-medium">${guardsCount}</td>
+                        <td class="p-4 text-gray-900 font-medium whitespace-nowrap">GHS ${monthlyRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="p-4 text-brand-600 font-bold whitespace-nowrap">GHS ${calculatedRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                ${client.status || 'Active'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center gap-3">
+                                <button onclick="viewClient('${clientId}')" class="text-blue-500 hover:text-blue-700 hover:scale-110 transition-all" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editClient('${clientId}')" class="text-amber-500 hover:text-amber-700 hover:scale-110 transition-all" title="Edit Client">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteClient('${clientId}')" class="text-red-500 hover:text-red-700 hover:scale-110 transition-all" title="Delete Client">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                // Wire the calculated grand total directly to the Dashboard Revenue Card
+                document.getElementById('val-revenue').innerHTML = formatGHS(aggregateTotalRevenue);
+                
+                // Update global revenue and recalculate profit
+                currentTotalRevenue = aggregateTotalRevenue;
+                calculateAndDisplayNetProfit();
+                
+            }, (error) => console.error("Clients listener error:", error));
+
+            // 3. Listen to Invoices Collection to drive the Pending Invoices card
+            const invoicesRef = collection(db, 'artifacts', appId, 'public', 'data', 'invoices');
+            
+            onSnapshot(invoicesRef, (snapshot) => {
+                const tbody = document.getElementById('invoices-table-body');
+                if(tbody) tbody.innerHTML = '';
+                
+                let pendingTotal = 0;
+                window.invoicesDataCache = {}; // Setup cache for actions
+
+                if (snapshot.empty) {
+                    if(tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400 italic">No invoices found. Click 'Generate Invoice' to begin.</td></tr>`;
+                    document.getElementById('val-invoices').innerHTML = formatGHS(0);
+                    return;
+                }
+
+                snapshot.forEach(docSnap => {
+                    const inv = docSnap.data();
+                    const invId = docSnap.id;
+                    const total = parseFloat(inv.totalAmount) || 0;
+                    
+                    // Save to local cache
+                    window.invoicesDataCache[invId] = inv;
+                    
+                    // Unsettled invoices are anything not yet marked 'Paid'
+                    if (inv.status !== 'Paid') {
+                        pendingTotal += total;
+                    }
+
+                    if(tbody) {
+                        const tr = document.createElement('tr');
+                        tr.className = 'bg-white hover:bg-gray-50 transition-colors';
+                        
+                        const currentStatus = inv.status || 'Draft';
+                        const statusColors = {
+                            'Paid': 'bg-green-100 text-green-800 border-green-200',
+                            'Sent': 'bg-blue-100 text-blue-800 border-blue-200',
+                            'Draft': 'bg-gray-100 text-gray-800 border-gray-200'
+                        };
+                        const colorClass = statusColors[currentStatus] || statusColors['Draft'];
+
+                        tr.innerHTML = `
+                            <td class="p-4 text-brand-700 font-bold whitespace-nowrap">#${inv.invoiceNumber || 'INV-XXXXX'}</td>
+                            <td class="p-4 text-gray-900 font-medium whitespace-nowrap">${inv.clientName || 'N/A'}</td>
+                            <td class="p-4 text-gray-600">${window.formatBillingMonth(inv.billingMonth) || 'N/A'}</td>
+                            <td class="p-4 text-gray-600">${inv.date || 'N/A'}</td>
+                            <td class="p-4 text-brand-600 font-bold whitespace-nowrap">GHS ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td class="p-4">
+                                <select onchange="updateInvoiceStatusInDB('${invId}', this.value)" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer ${colorClass}">
+                                    <option value="Draft" ${currentStatus === 'Draft' || currentStatus === 'Pending' ? 'selected' : ''}>Draft</option>
+                                    <option value="Sent" ${currentStatus === 'Sent' ? 'selected' : ''}>Sent</option>
+                                    <option value="Paid" ${currentStatus === 'Paid' ? 'selected' : ''}>Paid</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="flex items-center justify-center gap-3">
+                                    <button onclick="viewInvoice('${invId}')" class="text-blue-500 hover:text-blue-700 hover:scale-110 transition-all" title="View Invoice">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button onclick="editInvoice('${invId}')" class="text-amber-500 hover:text-amber-700 hover:scale-110 transition-all" title="Edit Invoice">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="printInvoice('${invId}')" class="text-gray-500 hover:text-gray-700 hover:scale-110 transition-all" title="Print Invoice">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    <button onclick="downloadInvoice('${invId}')" class="text-brand-500 hover:text-brand-700 hover:scale-110 transition-all" title="Download PDF">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    ${currentStatus === 'Paid' ? `
+                                    <button onclick="downloadReceipt('${invId}')" class="text-green-600 hover:text-green-800 hover:scale-110 transition-all" title="Download Receipt">
+                                        <i class="fas fa-receipt text-lg"></i>
+                                    </button>
+                                    ` : ''}
+                                    <button onclick="deleteInvoiceFromDB('${invId}')" class="text-red-500 hover:text-red-700 hover:scale-110 transition-all" title="Delete Invoice">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+                
+                // Feed pending total strictly to the dashboard card
+                document.getElementById('val-invoices').innerHTML = formatGHS(pendingTotal);
+                
+            }, (error) => console.error("Invoices listener error:", error));
+        }
+
+        // Global function for the standard script to call when submitting the Add Client form
+        window.saveClientToDB = async function(clientData) {
+            // Removed strict !auth.currentUser check to allow public database access
+            try {
+                const clientsRef = collection(db, 'artifacts', appId, 'public', 'data', 'clients');
+                await addDoc(clientsRef, clientData);
+                return true;
+            } catch (error) {
+                console.error("Error adding client:", error);
+                
+                // Show clear UI feedback for the permission error
+                if (error.code === 'permission-denied') {
+                    window.showToast("Firebase Permission Denied! Please update your Firestore Security Rules to 'allow read, write: if true;' in the Firebase Console.", "error");
+                } else {
+                    window.showToast("Failed to save client: " + error.message, "error");
+                }
+                return false;
+            }
+        };
+
+        // Global function to update an existing client
+        window.updateClientInDB = async function(clientId, clientData) {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'clients', clientId);
+                await updateDoc(docRef, clientData);
+                return true;
+            } catch (error) {
+                console.error("Error updating client:", error);
+                if (error.code === 'permission-denied') {
+                    window.showToast("Firebase Permission Denied! Update your rules.", "error");
+                } else {
+                    window.showToast("Failed to update client: " + error.message, "error");
+                }
+                return false;
+            }
+        };
+
+        // Global function to delete a client
+        window.deleteClientFromDB = async function(clientId) {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'clients', clientId);
+                await deleteDoc(docRef);
+                window.showToast("Client deleted successfully!", "success");
+            } catch (error) {
+                console.error("Error deleting client:", error);
+                if (error.code === 'permission-denied') {
+                    window.showToast("Permission Denied: Unable to delete client.", "error");
+                } else {
+                    window.showToast("Failed to delete client.", "error");
+                }
+            }
+        };
+
+        // Global Invoice Functions
+        window.saveInvoiceToDB = async function(invoiceData) {
+            try {
+                const ref = collection(db, 'artifacts', appId, 'public', 'data', 'invoices');
+                await addDoc(ref, invoiceData);
+                return true;
+            } catch (error) {
+                console.error("Error saving invoice:", error);
+                if (error.code === 'permission-denied') {
+                    window.showToast("Firebase Permission Denied! Update your Firestore rules.", "error");
+                } else {
+                    window.showToast("Failed to save invoice: " + error.message, "error");
+                }
+                return false;
+            }
+        };
+
+        window.deleteInvoiceFromDB = async function(invoiceId) {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'invoices', invoiceId);
+                await deleteDoc(docRef);
+                window.showToast("Invoice deleted successfully!", "success");
+            } catch (error) {
+                console.error("Error deleting invoice:", error);
+                window.showToast("Failed to delete invoice.", "error");
+            }
+        };
+
+        window.updateInvoiceInDB = async function(invoiceId, invoiceData) {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'invoices', invoiceId);
+                await updateDoc(docRef, invoiceData);
+                window.showToast("Invoice updated successfully!", "success");
+                return true;
+            } catch (error) {
+                console.error("Error updating invoice:", error);
+                if (error.code === 'permission-denied') {
+                    window.showToast("Permission Denied: Update Firestore rules.", "error");
+                } else {
+                    window.showToast("Failed to update invoice.", "error");
+                }
+                return false;
+            }
+        };
+
+        window.updateInvoiceStatusInDB = async function(invoiceId, newStatus) {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'invoices', invoiceId);
+                await updateDoc(docRef, { status: newStatus });
+                window.showToast(`Invoice marked as ${newStatus}`, "success");
+            } catch (error) {
+                console.error("Error updating invoice status:", error);
+                if (error.code === 'permission-denied') {
+                    window.showToast("Permission Denied: Cannot update status.", "error");
+                } else {
+                    window.showToast("Failed to update status.", "error");
+                }
+            }
+        };
+
+        // Start Firebase processes on script execution
+        initApp();
+    </script>
+</body>
+</html>
